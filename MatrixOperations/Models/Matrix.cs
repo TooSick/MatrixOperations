@@ -8,9 +8,15 @@ namespace MatrixOperations.Models
     {
         private double[][] Values;
 
+
         public Matrix()
         {
 
+        }
+
+        public Matrix(double[][] values)
+        {
+            Values = values;
         }
 
         public Matrix(int rows, int columns)
@@ -23,74 +29,74 @@ namespace MatrixOperations.Models
             }
         }
 
-        public Matrix(double[][] values)
-        {
-            Values = values;
-        }
 
-        public static Matrix operator *(Matrix A, Matrix B)
+        public static Matrix operator *(Matrix firstMatrix, Matrix secondMatrix)
         {
-            if (A != null && B != null)
+            if (firstMatrix != null && secondMatrix != null)
             {
-                if (A.Values[0].Length != B.Values.Length)
+                if (!CanMultiply(secondMatrix.Values.Length, firstMatrix.Values[0].Length))
                 {
                     throw new ArithmeticException("It is impossible to multiply matrices.");
                 }
 
-                int newMatrixRows = A.Values.Length;
-                int newMatrixColumns = B.Values[0].Length;
+                int newMatrixRows = firstMatrix.Values.Length;
+                int newMatrixColumns = secondMatrix.Values[0].Length;
+                int secondMatrixRows = secondMatrix.Values.Length;
+                Matrix newMatrix = new Matrix(newMatrixRows, newMatrixColumns);
 
-                Matrix C = new Matrix(newMatrixRows, newMatrixColumns);
-
-                int bMatrixRows = B.Values.Length;
                 Parallel.For(0, newMatrixRows, (i) =>
                 {
                     Parallel.For(0, newMatrixColumns, (j) =>
                     {
-                        Parallel.For(0, bMatrixRows, (k) =>
+                        Parallel.For(0, secondMatrixRows, (k) =>
                         {
-                            C.Values[i][j] += A.Values[i][k] * B.Values[k][j];
+                            newMatrix.Values[i][j] += firstMatrix.Values[i][k] * secondMatrix.Values[k][j];
                         });
                     });
                 });
 
-                return C;
+                return newMatrix;
             }
 
-            return new Matrix();
+            throw new ArgumentNullException();
         }
 
         public DataTable ToDataTable()
         {
-            DataTable resultTable = new DataTable();
+            DataTable dataTable = new DataTable();
 
             if (Values != null)
             {
                 for (int i = 0; i < Values[0].Length; i++)
                 {
-                    resultTable.Columns.Add();
+                    dataTable.Columns.Add();
                 }
 
                 for (int i = 0; i < Values.Length; i++)
                 {
-                    DataRow row = resultTable.NewRow();
+                    DataRow row = dataTable.NewRow();
 
                     for (int j = 0; j < Values[0].Length; j++)
                     {
                         row[j] = Values[i][j];
                     }
 
-                    resultTable.Rows.Add(row);
+                    dataTable.Rows.Add(row);
                 }
             }
 
-            return resultTable;
+            return dataTable;
         }
 
         public double this[int row, int column]
         {
             get { return Values[row][column]; }
             set { Values[row][column] = value; }
+        }
+
+        private static bool CanMultiply(int row, int column)
+        {
+            return row == column ? true : false;
         }
     }
 }

@@ -15,65 +15,70 @@ namespace MatrixOperations.ViewModels
 {
     public class MatrixViewModel : INotifyPropertyChanged
     {
-        private Matrix FirstMatrix;
-        private Matrix SecondMatrix;
-        public DataTable MatrixA { get; set; }
-        public DataTable MatrixB { get; set; }
-        public DataTable ResultMatrix { get; set; }
+        private Matrix _firstMatrix;
+        private Matrix _secondMatrix;
 
-        private RelayCommand firstOpenCommand;
+        private RelayCommand _firstOpenCommand;
+        private RelayCommand _secondOpenCommand;
+        private RelayCommand _equalCommand;
+
+
+        public DataTable FisrtDataTable { get; set; }
+
+        public DataTable SecondDataTable { get; set; }
+        
+        public DataTable ResultDataTable { get; set; }
+
         public RelayCommand FirstOpenCommand
         {
             get {
-                return firstOpenCommand ??= new RelayCommand(async obj =>
+                return _firstOpenCommand ??= new RelayCommand(async obj =>
                 {
-                    FirstMatrix = await ExecuteOpenCommandAsync();
-                    if (FirstMatrix != null)
+                    _firstMatrix = await GetMatrixAsync();
+                    if (_firstMatrix != null)
                     {
-                        MatrixA = FirstMatrix.ToDataTable();
+                        FisrtDataTable = _firstMatrix.ToDataTable();
                         OnPropertyChanged("MatrixA");
                     }
 
-                    if (ResultMatrix != null)
+                    if (ResultDataTable != null)
                     {
-                        ResultMatrix.Clear();
+                        ResultDataTable.Clear();
                     }
                 });
             }
         }
 
-        private RelayCommand secondOpenCommand;
         public RelayCommand SecondOpenCommand
         {
             get
             {
-                return secondOpenCommand ??= new RelayCommand(async obj =>
+                return _secondOpenCommand ??= new RelayCommand(async obj =>
                 {
-                    SecondMatrix = await ExecuteOpenCommandAsync();
-                    if (SecondMatrix != null)
+                    _secondMatrix = await GetMatrixAsync();
+                    if (_secondMatrix != null)
                     {
-                        MatrixB = SecondMatrix.ToDataTable();
+                        SecondDataTable = _secondMatrix.ToDataTable();
                         OnPropertyChanged("MatrixB");
                     }
 
-                    if (ResultMatrix != null)
+                    if (ResultDataTable != null)
                     {
-                        ResultMatrix.Clear();
+                        ResultDataTable.Clear();
                     }
                 });
             }
         }
 
-        private RelayCommand equalCommand;
         public RelayCommand EqualCommand
         {
             get
             {
-                return equalCommand ??= new RelayCommand(obj =>
+                return _equalCommand ??= new RelayCommand(obj =>
                 {
                     try
                     {
-                        ResultMatrix = (FirstMatrix * SecondMatrix).ToDataTable();
+                        ResultDataTable = (_firstMatrix * _secondMatrix).ToDataTable();
                         OnPropertyChanged("ResultMatrix");
                     }
                     catch (Exception)
@@ -84,17 +89,21 @@ namespace MatrixOperations.ViewModels
             }
         }
 
-        private async Task<Matrix?> ExecuteOpenCommandAsync()
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        
+
+        private async Task<Matrix?> GetMatrixAsync()
         { 
             try
             {
-                string path = GetFilePathFromOpenDialog();
+                string path = GetTxtFilePathFromOpenDialog();
 
                 if (!string.IsNullOrEmpty(path))
                 {
                     List<string> data = await TxtFileWorker.GetDataAsync(path);
 
-                    return new Matrix(ConvertTo2DDoubleArray(data));
+                    return new Matrix(ConvertToDoubleArrayOfArray(data));
                 }
             }
             catch (FormatException)
@@ -113,7 +122,7 @@ namespace MatrixOperations.ViewModels
             return null;
         }
 
-        private double[][] ConvertTo2DDoubleArray(List<string> data)
+        private double[][] ConvertToDoubleArrayOfArray(List<string> data)
         {
             double[][] result = new double[data.Count][];
 
@@ -130,7 +139,7 @@ namespace MatrixOperations.ViewModels
             return result;
         }
 
-        private string GetFilePathFromOpenDialog()
+        private string GetTxtFilePathFromOpenDialog()
         {
             OpenFileDialog dialog = new OpenFileDialog();
 
@@ -147,7 +156,7 @@ namespace MatrixOperations.ViewModels
             return string.Empty;
         }
 
-        public event PropertyChangedEventHandler? PropertyChanged;
+
         public void OnPropertyChanged([CallerMemberName] string prop = "")
         {
             if (PropertyChanged != null)
